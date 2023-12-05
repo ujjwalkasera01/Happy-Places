@@ -2,16 +2,24 @@ package com.example.happyplaces
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
+import android.graphics.Bitmap
 import android.media.audiofx.Equalizer.Settings
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.widget.Toolbar
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.karumi.dexter.Dexter
@@ -19,10 +27,16 @@ import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.time.Month
 import java.util.Calendar
 import java.util.Locale
+import java.util.UUID
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -31,9 +45,14 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     private val cal = Calendar.getInstance()
     private lateinit var dateSetListener : DatePickerDialog.OnDateSetListener
 
+    companion object {
+        private const val GALLERY = 1
+        private const val CAMERA = 2
+        private const val IMAGE_DIRECTORY = "HappyPlacesImages"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_add_happy_place)
         bindingAddHappyPlaceActivity = ActivityAddHappyPlaceBinding.inflate(layoutInflater)
         val view = bindingAddHappyPlaceActivity.root
         setContentView(view)
@@ -70,11 +89,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 pictureDialog.setItems(pictureDialogItems) { _, which ->
                     when (which) {
                         0 -> { selectPhotoFromGallery() }
-                        1 -> {
-                            Toast.makeText(this,
-                                "Camera Selection Coming Soon.....",
-                                Toast.LENGTH_SHORT).show()
-                        }
+                        1 -> { takePhotoFromCamera() }
                     }
                 }
                 pictureDialog.show()
@@ -82,18 +97,25 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun selectPhotoFromGallery() {
+    private fun takePhotoFromCamera() {
         Dexter.withContext(this@AddHappyPlaceActivity).withPermissions(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.CAMERA
         ).withListener(object : MultiplePermissionsListener {
             override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
                 if(report!!.areAllPermissionsGranted()){
-                    Toast.makeText(this@AddHappyPlaceActivity
-                        ,"Storage READ/WRITE permissions are granted."
-                        ,Toast.LENGTH_LONG).show()
+                    val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    startActivityForResult(cameraIntent, CAMERA)
                 }
-                else { showRationalDialogForPermissions() }
+                else if (report!!.isAnyPermissionPermanentlyDenied()) {
+                    //if any of them are permanently disabled
+                    // (i.e. "deny and don't ask again" etc..)
+                    showRationalDialogForPermissions()
+                }
+                else {  //if it's a simple "deny" from the user
+                    Toast.makeText(this@AddHappyPlaceActivity,
+                        "This permission is required to access your gallery",
+                        Toast.LENGTH_LONG).show()
+                }
             }
             override fun onPermissionRationaleShouldBeShown(
                 permissions: MutableList<PermissionRequest>?,
@@ -101,7 +123,37 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                 token?.continuePermissionRequest()
 
             }
-        }).check()
+        }).onSameThread().check()
+    }
+
+    private fun selectPhotoFromGallery() {
+        Dexter.withContext(this@AddHappyPlaceActivity).withPermissions(
+            Manifest.permission.READ_MEDIA_IMAGES
+        ).withListener(object : MultiplePermissionsListener {
+            override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                if(report!!.areAllPermissionsGranted()){
+                    val galleryIntent = Intent(Intent.ACTION_PICK,
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                    startActivityForResult(galleryIntent, GALLERY)
+                }
+                else if (report!!.isAnyPermissionPermanentlyDenied()) {
+                    //if any of them are permanently disabled
+                    // (i.e. "deny and don't ask again" etc..)
+                    showRationalDialogForPermissions()
+                }
+                else {  //if it's a simple "deny" from the user
+                    Toast.makeText(this@AddHappyPlaceActivity,
+                        "This permission is required to access your gallery",
+                        Toast.LENGTH_LONG).show()
+                }
+            }
+            override fun onPermissionRationaleShouldBeShown(
+                permissions: MutableList<PermissionRequest>?,
+                token: PermissionToken? ) {
+                token?.continuePermissionRequest()
+
+            }
+        }).onSameThread().check()
     }
 
     private fun showRationalDialogForPermissions() {
@@ -123,6 +175,54 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             dialog.dismiss()
         }.show()
     }
+
+    public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK){
+            if(requestCode == GALLERY) {
+                if (data != null) {
+                    val contentURI = data.data
+                    try {
+                        val selectedImageBitmap = MediaStore.Images.Media
+                            .getBitmap(this.contentResolver, contentURI)
+
+                        val saveToInternal = saveImageToInternalStorage(selectedImageBitmap)
+                        Log.e("Saved Image","Path :: $saveToInternal")
+
+                        bindingAddHappyPlaceActivity.ivPlaceImage.setImageBitmap(selectedImageBitmap)
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        Toast.makeText(
+                            this@AddHappyPlaceActivity,
+                            "Failed to load", Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }else if (requestCode == CAMERA){
+                val captureImageBitmap : Bitmap = data!!.extras!!.get("data") as Bitmap
+
+                val saveToInternal = saveImageToInternalStorage(captureImageBitmap)
+                Log.e("Saved Image","Path :: $saveToInternal")
+
+                bindingAddHappyPlaceActivity.ivPlaceImage.setImageURI(saveToInternal)
+            }
+        }
+    }
+
+   private fun saveImageToInternalStorage(bitmap: Bitmap):Uri{
+       val wrapper = ContextWrapper(applicationContext)
+       var file = wrapper.getDir(IMAGE_DIRECTORY,Context.MODE_PRIVATE)
+       file = File(file,"${UUID.randomUUID()}.jpg")
+       try{
+           val stream : OutputStream = FileOutputStream(file)
+           bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream)
+           stream.flush()
+           stream.close()
+       }catch (e:IOException){
+           e.printStackTrace()
+       }
+       return Uri.parse(file.absolutePath)
+   }
 
     @SuppressLint("WeekBasedYear")
     private fun updateDateInView(){
