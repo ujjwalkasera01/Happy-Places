@@ -1,11 +1,10 @@
-package com.example.happyplaces
+package com.example.happyplaces.activities
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
+import com.example.happyplaces.R
 import com.example.happyplaces.databinding.ActivityMainBinding
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class MainActivity : AppCompatActivity() {
     private lateinit var bindingActivity: ActivityMainBinding
