@@ -18,7 +18,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.example.happyplaces.R
-import com.example.happyplaces.database.DatabaseHandler
+import com.example.happyplaces.databases.DatabaseHandler
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.example.happyplaces.models.HappyPlaceModel
 import com.karumi.dexter.Dexter
