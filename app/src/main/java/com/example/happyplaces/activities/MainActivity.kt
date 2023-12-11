@@ -1,5 +1,6 @@
 package com.example.happyplaces.activities
 
+import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -14,6 +15,10 @@ import com.example.happyplaces.models.HappyPlaceModel
 
 class MainActivity : AppCompatActivity() {
     private lateinit var bindingActivity: ActivityMainBinding
+    companion object{
+        val ADD_PLACE_ACTIVITY_REQUEST_CODE = 1
+        val EXTRA_PLACE_DETAIL : String? = "extra_place_detail"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -21,12 +26,23 @@ class MainActivity : AppCompatActivity() {
         setContentView(bindingActivity.root)
         bindingActivity.fabAddHappyPlace.setOnClickListener{
             val intent = Intent(this@MainActivity, AddHappyPlaceActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent,ADD_PLACE_ACTIVITY_REQUEST_CODE)
         }
         // TODO(Step 3 : Calling an function which have created for getting list when activity is launched.)
         // START
         getHappyPlacesListFromLocalDB()
         // END
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == ADD_PLACE_ACTIVITY_REQUEST_CODE){
+            if(resultCode == Activity.RESULT_OK){
+                getHappyPlacesListFromLocalDB()
+            }else{
+                Log.e("Activity","Cancelled or Back Pressed")
+            }
+        }
     }
     // TODO(Step 2 : Calling an function which have created for getting list of inserted data from local database. And the list of values are printed in the log.)
     // START
@@ -64,6 +80,13 @@ class MainActivity : AppCompatActivity() {
 
         val placesAdapter = HappyPlacesAdapter(this, happyPlacesList)
         bindingActivity.rvHappyPlacesList.adapter = placesAdapter
+
+        placesAdapter.setOnClickListener(object : HappyPlacesAdapter.OnClickListener {
+            override fun onClick(position: Int, model: HappyPlaceModel) {
+                val intent = Intent(this@MainActivity,HappyPlaceDetailActivity::class.java)
+                intent.putExtra(EXTRA_PLACE_DETAIL,model)
+                startActivity(intent)
+            }
+        })
     }
-    // END
 }
