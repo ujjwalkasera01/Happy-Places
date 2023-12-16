@@ -45,6 +45,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
     private var mLatitude : Double = 0.0
     private var mLongitude : Double = 0.0
 
+    private var mHappyPlaceDetails : HappyPlaceModel? = null
+
     companion object {
         private const val GALLERY = 1
         private const val CAMERA = 2
@@ -57,9 +59,14 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         val view = bindingAddHappyPlaceActivity.root
         setContentView(view)
 
-        //setSupportActionBar(binding.toolbarAddPlace)
+        setSupportActionBar(bindingAddHappyPlaceActivity.toolbarAddPlace)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        bindingAddHappyPlaceActivity.toolbarAddPlace.setNavigationOnClickListener { onBackPressedDispatcher.onBackPressed()
+        bindingAddHappyPlaceActivity.toolbarAddPlace.setNavigationOnClickListener {
+            onBackPressedDispatcher.onBackPressed()
+        }
+
+        if(intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)){
+            mHappyPlaceDetails = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAIL)
         }
 
         dateSetListener = DatePickerDialog.OnDateSetListener {
@@ -70,6 +77,19 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
             updateDateInView()
         }
         updateDateInView()
+        if(mHappyPlaceDetails != null) {
+            supportActionBar?.title = "Edit Happy Place"
+            bindingAddHappyPlaceActivity.etTitle.setText(mHappyPlaceDetails!!.title)
+            bindingAddHappyPlaceActivity.etDescription.setText(mHappyPlaceDetails!!.description)
+            bindingAddHappyPlaceActivity.etDate.setText(mHappyPlaceDetails!!.date)
+            bindingAddHappyPlaceActivity.etLocation.setText(mHappyPlaceDetails!!.location)
+            mLatitude = mHappyPlaceDetails!!.latitude
+            mLongitude = mHappyPlaceDetails!!.longitude
+            saveImageToInternalStorage = Uri.parse(mHappyPlaceDetails!!.image)
+            bindingAddHappyPlaceActivity.ivPlaceImage.setImageURI(saveImageToInternalStorage)
+            bindingAddHappyPlaceActivity.btnSave.setText(R.string.update_happy_place)
+        }
+
         bindingAddHappyPlaceActivity.etDate.setOnClickListener(this)
         bindingAddHappyPlaceActivity.tvAddImage.setOnClickListener(this)
         bindingAddHappyPlaceActivity.btnSave.setOnClickListener(this)
