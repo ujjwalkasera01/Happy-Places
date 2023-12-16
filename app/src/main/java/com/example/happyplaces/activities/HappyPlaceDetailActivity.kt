@@ -1,5 +1,6 @@
 package com.example.happyplaces.activities
 
+import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -16,29 +17,35 @@ class HappyPlaceDetailActivity : AppCompatActivity() {
         val view = bindingHappyPlaceDetailBinding.root
         setContentView(view)
 
-        var happyPlaceDetilModel : HappyPlaceModel? = null
+        var happyPlaceDetailModel : HappyPlaceModel? = null
 
         if(intent.hasExtra(MainActivity.EXTRA_PLACE_DETAIL)){
 //            happyPlaceDetilModel = intent.getSerializableExtra(
 //                MainActivity.EXTRA_PLACE_DETAIL) as HappyPlaceModel
-            happyPlaceDetilModel = intent.getParcelableExtra(
+            happyPlaceDetailModel = intent.getParcelableExtra(
                 MainActivity.EXTRA_PLACE_DETAIL)
         }
 
-        if(happyPlaceDetilModel != null){
+        if(happyPlaceDetailModel != null){
             setSupportActionBar(bindingHappyPlaceDetailBinding.toolbarHappyPlaceDetail)
             supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-            supportActionBar!!.title = happyPlaceDetilModel.title
+            supportActionBar!!.title = happyPlaceDetailModel.title
             bindingHappyPlaceDetailBinding.toolbarHappyPlaceDetail
                 .setNavigationOnClickListener{
                 onBackPressed()
             }
             bindingHappyPlaceDetailBinding.ivPlaceImage
-                .setImageURI(Uri.parse(happyPlaceDetilModel.image))
+                .setImageURI(Uri.parse(happyPlaceDetailModel.image))
             bindingHappyPlaceDetailBinding.tvDescription
-                .setText(happyPlaceDetilModel.description)
+                .setText(happyPlaceDetailModel.description)
             bindingHappyPlaceDetailBinding.tvLocation
-                .setText(happyPlaceDetilModel.location)
+                .setText(happyPlaceDetailModel.location)
+
+            bindingHappyPlaceDetailBinding.btnViewOnMap.setOnClickListener{
+                val intent = Intent(this,MapActivity::class.java)
+                intent.putExtra(MainActivity.EXTRA_PLACE_DETAIL,happyPlaceDetailModel)
+                startActivity(intent)
+            }
         }
     }
 }

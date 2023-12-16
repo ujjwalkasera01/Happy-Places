@@ -9,10 +9,12 @@
     
     <style name="CustomNoActionBarTheme" parent="@style/Theme.MaterialComponents.Light.NoActionBar">
         <item name="android:statusBarColor">@color/colorPrimaryDark</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
     </style>
     
     <style name="CustomToolbarStyle">
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:colorControlNormal">@color/white</item>
+        <item name="colorPrimary">@color/colorPrimaryDark</item>
     </style>
 </resources>
