@@ -136,7 +136,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     }else -> {
                         // Assigning all the values to data model class.
                         val happyPlaceModel = HappyPlaceModel(
-                            0,
+                            if(mHappyPlaceDetails == null) 0 else mHappyPlaceDetails!!.id,
                             bindingAddHappyPlaceActivity.etTitle.text.toString(),
                             saveImageToInternalStorage.toString(),
                             bindingAddHappyPlaceActivity.etDescription.text.toString(),
@@ -149,11 +149,18 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         // Here we initialize the database handler class.
                         val dbHandler = DatabaseHandler(this)
 
-                        val addHappyPlace = dbHandler.addHappyPlace(happyPlaceModel)
-
-                        if (addHappyPlace > 0) {
-                            setResult(Activity.RESULT_OK)
-                            finish();//finishing activity
+                        if(mHappyPlaceDetails == null){
+                            val addHappyPlace = dbHandler.addHappyPlace(happyPlaceModel)
+                            if (addHappyPlace > 0) {
+                                setResult(Activity.RESULT_OK)
+                                finish();//finishing activity
+                            }
+                        }else{
+                            val updateHappyPlace = dbHandler.updateHappyPlace(happyPlaceModel)
+                            if (updateHappyPlace > 0) {
+                                setResult(Activity.RESULT_OK)
+                                finish();//finishing activity
+                            }
                         }
                     }
                 }
