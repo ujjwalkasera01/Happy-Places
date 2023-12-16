@@ -14,6 +14,7 @@ import com.example.happyplaces.adapters.HappyPlacesAdapter
 import com.example.happyplaces.databases.DatabaseHandler
 import com.example.happyplaces.databinding.ActivityMainBinding
 import com.example.happyplaces.models.HappyPlaceModel
+import com.example.happyplaces.utils.SwipeToDeleteCallback
 import com.example.happyplaces.utils.SwipeToEditCallback
 
 class MainActivity : AppCompatActivity() {
@@ -99,8 +100,17 @@ class MainActivity : AppCompatActivity() {
                     ADD_PLACE_ACTIVITY_REQUEST_CODE)
             }
         }
-
         val editItemTouchHelper = ItemTouchHelper(editSwipeHandler)
         editItemTouchHelper.attachToRecyclerView(bindingActivity.rvHappyPlacesList)
+
+        val deleteSwipeHandler = object : SwipeToDeleteCallback (this){
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val adapter = bindingActivity.rvHappyPlacesList.adapter as HappyPlacesAdapter
+                adapter.removeAt(viewHolder.adapterPosition)
+                getHappyPlacesListFromLocalDB()
+            }
+        }
+        val deleteItemTouchHelper = ItemTouchHelper(deleteSwipeHandler)
+        deleteItemTouchHelper.attachToRecyclerView(bindingActivity.rvHappyPlacesList)
     }
 }

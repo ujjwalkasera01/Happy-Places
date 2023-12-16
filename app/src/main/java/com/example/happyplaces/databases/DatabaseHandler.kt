@@ -99,9 +99,12 @@ class DatabaseHandler(context: Context) :
         return success
     }
 
-    // END
-    // TODO(Step 1 : Creating a function to read all the list of Happy Places data which are inserted.)
-    // START
+    fun deleteHappyPlace(happyPlace: HappyPlaceModel): Int{
+        val db = this.writableDatabase
+        val success = db.delete(TABLE_HAPPY_PLACE, KEY_ID + "=" + happyPlace.id,null)
+        db.close()
+        return success
+    }
     /**
      * Function to read all the list of Happy Places data which are inserted.
      */
