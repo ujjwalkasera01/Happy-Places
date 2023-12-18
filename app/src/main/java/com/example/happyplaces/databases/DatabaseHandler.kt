@@ -9,8 +9,7 @@ import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.happyplaces.models.HappyPlaceModel
 
-// TODO (Step 3 : Creating a database handler class for local database operations like creating a table and inserting a Happy Place Detail.)
-// START
+//Creating a database handler class for local database operations like creating a table and inserting a Happy Place Detail.
 //creating the database logic, extending the SQLiteOpenHelper base class
 class DatabaseHandler(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
@@ -50,8 +49,7 @@ class DatabaseHandler(context: Context) :
         onCreate(db)
     }
 
-    // TODO (Step 4 : After Creating a database handler class. Let us create an function to insert a happy place detail to respective table.)
-    // START
+    // After Creating a database handler class. Let us create an function to insert a happy place detail to respective table.
     /**
      * Function to insert a Happy Place details to SQLite Database.
      */

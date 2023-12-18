@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.happyplaces.activities
 
 import android.Manifest
@@ -10,10 +12,14 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Looper
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -21,6 +27,12 @@ import com.example.happyplaces.R
 import com.example.happyplaces.databases.DatabaseHandler
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.example.happyplaces.models.HappyPlaceModel
+import com.example.happyplaces.utils.getAddressFromLatLng
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
@@ -51,6 +63,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
 
     private var mHappyPlaceDetails : HappyPlaceModel? = null
 
+    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
+
     companion object {
         private const val GALLERY = 1
         private const val CAMERA = 2
@@ -69,6 +83,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         bindingAddHappyPlaceActivity.toolbarAddPlace.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this@AddHappyPlaceActivity)
 
         if(!Places.isInitialized()){
             Places.initialize(this@AddHappyPlaceActivity,
@@ -105,7 +121,45 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         bindingAddHappyPlaceActivity.tvAddImage.setOnClickListener(this)
         bindingAddHappyPlaceActivity.btnSave.setOnClickListener(this)
         bindingAddHappyPlaceActivity.etLocation.setOnClickListener(this)
+        bindingAddHappyPlaceActivity.tvSelectCurrentLocation.setOnClickListener(this)
+    }
 
+    private fun isLocationEnabled():Boolean{
+        val locationManager : LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+                ||  locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestNewLocationData(){
+        val mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.interval = 0
+        mLocationRequest.numUpdates = 1
+
+        mFusedLocationProviderClient.requestLocationUpdates(
+            mLocationRequest,mLocationCallback, Looper.myLooper())
+    }
+
+    val mLocationCallback = object : LocationCallback(){
+        override fun onLocationResult(locationResult: LocationResult) {
+            val mLastLocation : Location? = locationResult.lastLocation
+            mLatitude = mLastLocation!!.latitude
+            mLongitude = mLastLocation.longitude
+            Log.e("Current location","lat:$mLatitude,long:$mLongitude")
+
+            val addressTask = getAddressFromLatLng(this@AddHappyPlaceActivity,mLatitude,mLongitude)
+            addressTask.setAddressListener(object:getAddressFromLatLng.AddressListener{
+                override fun onAddressFound(address: String?) {
+                    bindingAddHappyPlaceActivity.etLocation.setText(address)
+                }
+                override fun onError() {
+                    Log.e("Address","Something went wrong")
+                }
+            })
+            addressTask.getAddress()
+
+        }
     }
 
     override fun onClick(v: View?) {
@@ -165,13 +219,13 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                             val addHappyPlace = dbHandler.addHappyPlace(happyPlaceModel)
                             if (addHappyPlace > 0) {
                                 setResult(Activity.RESULT_OK)
-                                finish();//finishing activity
+                                finish()//finishing activity
                             }
                         }else{
                             val updateHappyPlace = dbHandler.updateHappyPlace(happyPlaceModel)
                             if (updateHappyPlace > 0) {
                                 setResult(Activity.RESULT_OK)
-                                finish();//finishing activity
+                                finish()//finishing activity
                             }
                         }
                     }
@@ -190,6 +244,43 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     e.printStackTrace()
                 }
             }
+            R.id.tv_select_current_location -> {
+                if(!isLocationEnabled()){
+                    Toast.makeText(this
+                        ,"Your Location provider is turned off.PLease turned it on"
+                        ,Toast.LENGTH_SHORT).show()
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
+                }else{
+                    Dexter.withContext(this@AddHappyPlaceActivity).withPermissions(
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ).withListener(object : MultiplePermissionsListener{
+                        override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                            if(report!!.areAllPermissionsGranted()){
+                                requestNewLocationData()
+//                                Toast.makeText(this@AddHappyPlaceActivity,
+//                                    "Location Permission is granted.Now you can get Current Location",
+//                                    Toast.LENGTH_SHORT).show()
+                            }else if (report.isAnyPermissionPermanentlyDenied()) {
+                                //if any of them are permanently disabled
+                                // (i.e. "deny and don't ask again" etc..)
+                                showRationalDialogForPermissions()
+                            }
+                            else {  //if it's a simple "deny" from the user
+                                Toast.makeText(this@AddHappyPlaceActivity,
+                                    "This permission is required to access your location",
+                                    Toast.LENGTH_LONG).show()
+                            }
+                        }
+                        override fun onPermissionRationaleShouldBeShown(
+                            permissions: MutableList<PermissionRequest>?,
+                            token: PermissionToken? ) {
+                            token?.continuePermissionRequest()
+                        }
+                    }).onSameThread().check()
+                }
+            }
         }
     }
 
@@ -202,7 +293,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                     val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                     startActivityForResult(cameraIntent, CAMERA)
                 }
-                else if (report!!.isAnyPermissionPermanentlyDenied()) {
+                else if (report.isAnyPermissionPermanentlyDenied()) {
                     //if any of them are permanently disabled
                     // (i.e. "deny and don't ask again" etc..)
                     showRationalDialogForPermissions()
@@ -232,7 +323,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                     startActivityForResult(galleryIntent, GALLERY)
                 }
-                else if (report!!.isAnyPermissionPermanentlyDenied()) {
+                else if (report.isAnyPermissionPermanentlyDenied()) {
                     //if any of them are permanently disabled
                     // (i.e. "deny and don't ask again" etc..)
                     showRationalDialogForPermissions()
@@ -259,7 +350,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         ).setPositiveButton("Go to Settings")
         { _,_ ->
             try{
-                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 val uri = Uri.fromParts("package",packageName,null)
                 intent.data = uri
                 startActivity(intent)
@@ -272,6 +363,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener {
         }.show()
     }
 
+    @Deprecated("Deprecated in Java")
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(resultCode == Activity.RESULT_OK){

@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.happyplaces.activities
 
 import android.app.Activity
@@ -21,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bindingActivity: ActivityMainBinding
     companion object{
         val ADD_PLACE_ACTIVITY_REQUEST_CODE = 1
-        val EXTRA_PLACE_DETAIL : String? = "extra_place_detail"
+        val EXTRA_PLACE_DETAIL : String = "extra_place_detail"
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +34,11 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this@MainActivity, AddHappyPlaceActivity::class.java)
             startActivityForResult(intent,ADD_PLACE_ACTIVITY_REQUEST_CODE)
         }
-        // TODO(Step 3 : Calling an function which have created for getting list when activity is launched.)
-        // START
+        // Calling an function which have created for getting list when activity is launched.
         getHappyPlacesListFromLocalDB()
-        // END
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == ADD_PLACE_ACTIVITY_REQUEST_CODE){
@@ -48,8 +49,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    // TODO(Step 2 : Calling an function which have created for getting list of inserted data from local database. And the list of values are printed in the log.)
-    // START
     /**
      * A function to get the list of happy place from local database.
      */
@@ -59,9 +58,7 @@ class MainActivity : AppCompatActivity() {
 
         val getHappyPlacesList = dbHandler.getHappyPlacesList()
 
-        // TODO (Step 8: Calling an function which have created for getting list of inserted data from local database
-                //  and passing the list to recyclerview to populate in UI.)
-                // START
+        //  and passing the list to recyclerview to populate in UI.)
         if (getHappyPlacesList.size > 0) {
             bindingActivity.rvHappyPlacesList.visibility = View.VISIBLE
             bindingActivity.tvNoRecordsAvailable.visibility = View.GONE
@@ -70,10 +67,7 @@ class MainActivity : AppCompatActivity() {
             bindingActivity.rvHappyPlacesList.visibility = View.GONE
             bindingActivity.tvNoRecordsAvailable.visibility = View.VISIBLE
         }
-        // END
     }
-    // TODO(Step 7 : Creating a function for setting up the recyclerview to UI.)
-    // START
     /**
      * A function to populate the recyclerview to the UI.
      */

@@ -1,11 +1,11 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.happyplaces.activities
 
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.happyplaces.R
-import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.example.happyplaces.databinding.ActivityHappyPlaceDetailBinding
 import com.example.happyplaces.models.HappyPlaceModel
 

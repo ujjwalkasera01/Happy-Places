@@ -6,9 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.OnClickListener
 import android.view.ViewGroup
-import androidx.core.os.persistableBundleOf
 import androidx.recyclerview.widget.RecyclerView
 import com.example.happyplaces.activities.AddHappyPlaceActivity
 import com.example.happyplaces.activities.MainActivity
@@ -16,8 +14,7 @@ import com.example.happyplaces.databases.DatabaseHandler
 import com.example.happyplaces.databinding.ItemHappyPlaceBinding
 import com.example.happyplaces.models.HappyPlaceModel
 
-// TODO (Step 6: Creating an adapter class for binding it to the recyclerview in the new package which is adapters.)
-// START
+// Creating an adapter class for binding it to the recyclerview in the new package which is adapters.
 open class HappyPlacesAdapter(
     private val context: Context,
     private var list: ArrayList<HappyPlaceModel>

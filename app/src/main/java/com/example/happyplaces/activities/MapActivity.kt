@@ -1,5 +1,8 @@
+@file:Suppress("DEPRECATION")
+
 package com.example.happyplaces.activities
 
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.example.happyplaces.R
@@ -16,6 +19,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var bindingMapActivity: ActivityMapBinding
     private var mHappyPlaceDetails : HappyPlaceModel? = null
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bindingMapActivity = ActivityMapBinding.inflate(layoutInflater)

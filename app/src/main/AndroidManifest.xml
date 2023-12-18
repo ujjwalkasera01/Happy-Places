@@ -6,6 +6,8 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -26,8 +28,6 @@
             android:screenOrientation="fullSensor"
             android:theme="@style/CustomNoActionBarTheme" />
         <!--
-             TODO: Before you run your application, you need a Google Maps API key.
-
              To get one, follow the directions here:
 
                 https://developers.google.com/maps/documentation/android-sdk/get-api-key
